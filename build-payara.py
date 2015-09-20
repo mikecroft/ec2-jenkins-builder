@@ -5,7 +5,7 @@ import configparser
 import json
 import urllib
 import jenkins
-
+import xml.etree.ElementTree as ET
 
 ec2 = boto3.resource('ec2')
 jenkinsIP = '0.0.0.0'
@@ -27,14 +27,20 @@ def isServiceUp(URL):
 
 
 
-def buildJob(jobName):
+def buildJob(jobName, brName='master', goals='clean install'):
     svr = jenkins.Jenkins('http://' + jenkinsIP + ':8080')
-    print(svr.build_job(jobName))
-    print(svr.get_job_config(jobName))
+#    print(svr.build_job(jobName))
+    config = svr.get_job_config(jobName)
+    defineBuild(config, brName, goals)
 
 
-
-
+def defineBuild(config, brName, goals):
+    # maven2-modulset >> scm >> branches >> hudson.plugins.git.BranchSpec >> name
+    root = ET.fromstring(config)
+    branch = root.find('scm/branches/hudson.plugins.git.BranchSpec/name')
+    g = root.find('goals')
+    print('goals = ' + g.text)
+    print('branch name = ' +  branch.text  )
 
 
 
