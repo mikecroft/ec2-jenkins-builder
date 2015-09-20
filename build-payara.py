@@ -39,7 +39,7 @@ def buildJob(jobName):
 
 
 startInstance('i-f5095b58')
-while (!(isServiceUp('http://' + jenkinsIP + ':8080'))):
+while (not (isServiceUp('http://' + jenkinsIP + ':8080'))):
     time.sleep(2)
 
 buildJob('Payara')
