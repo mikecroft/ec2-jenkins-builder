@@ -6,6 +6,7 @@ import json
 import urllib
 import jenkins
 import xml.etree.ElementTree as ET
+import time
 
 ec2 = boto3.resource('ec2')
 jenkinsIP = '0.0.0.0'
@@ -29,9 +30,13 @@ def isServiceUp(URL):
 
 def buildJob(jobName, brName='master', goals='clean install'):
     svr = jenkins.Jenkins('http://' + jenkinsIP + ':8080')
-#    print(svr.build_job(jobName))
     config = svr.get_job_config(jobName)
-    defineBuild(config, brName, goals)
+    svr.reconfig_job(jobName, defineBuild(config, brName, goals))
+    print(svr.build_job(jobName))
+
+    while (True):
+        print(svr.get_jobs())
+        time.sleep(10)
 
 
 def defineBuild(config, brName, goals):
@@ -40,15 +45,18 @@ def defineBuild(config, brName, goals):
     branch = root.find('scm/branches/hudson.plugins.git.BranchSpec/name')
     g = root.find('goals')
     print('goals = ' + g.text)
+    g.text = goals
     print('branch name = ' +  branch.text  )
+    branch.text = brName
+    return ET.tostring(root, encoding='unicode', method='xml')
 
 
 
 startInstance('i-f5095b58')
-while (not (isServiceUp('http://' + jenkinsIP + ':8080'))):
+while (isServiceUp('http://' + jenkinsIP + ':8080')) != True:
     time.sleep(2)
 
-buildJob('Payara')
+buildJob('Payara', 'payara-4.1.153-maintenance', 'clean install -Dbuild.number=PythonAutoBuild-77')
 
 
 #stopInstance('i-f5095b58')
